@@ -1,0 +1,389 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Kendaraan";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <h3 class="text-center mt-2"><b>Kendaraan Page</b></h3>
+                <hr />
+                <div class="card-body">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <button class="btn btn-sm btn-success" onclick="addKendaraan();"><i class="bi bi-plus-square"></i> Tambah</button>
+                                <button class="btn btn-sm btn-info" onclick="modalImport();"><i class="bi bi-file-earmark-arrow-up"></i> Import</button>
+                                <button class="btn btn-sm btn-info" onclick="expKendaraanXlsx(this.value);" value="/Kendaraan/ExportXlsx/"><i class="bi bi-file-earmark-arrow-down"></i> XLSX</button>
+                                <button class="btn btn-sm btn-info" onclick="expKendaraanPdf(this.value);" value="/Kendaraan/ExportPDF/"><i class="bi bi-file-earmark-arrow-down"></i> PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Model</th>
+                                <th>Merek</th>
+                                <th>Transmisi</th>
+                                <th>Tahun</th>
+                                <th>Harga</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listKendaraan">
+
+                        </tbody>
+                    </table>
+                </div>                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    
+    <!-- Modal -->
+    <div class="modal fade" id="modalKendaraan" tabindex="-1" aria-labelledby="kendaraanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="kendaraanModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="nama">Nama Kendaraan</label>
+                                <input type="text" class="form-control" id="nama" placeholder="mobil, motor, dll">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="model">Model Kendaraan</label>
+                                <input type="text" class="form-control" id="model" placeholder="name@example.com">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="merek">Merek Kendaraan</label>
+                                <input type="text" class="form-control" id="merek" placeholder="Honda, Toyota, dll">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="transmisi">Transmisi Kendaraan</label>
+                                <input type="text" class="form-control" id="transmisi" placeholder="Otomatis atau Manual">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="tahun">Tahun Kendaraan</label>
+                                <input type="text" class="form-control dates" id="tahun" placeholder="name@example.com">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="harga">Harga Kendaraan</label>
+                                <input type="number" class="form-control" id="harga" placeholder="name@example.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="hidden" value="" id="idKendaraan"/>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="save()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="importKendaraan" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Upload Data Kendaraan</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label>Upload Xlsx</label>
+                            <input type="file" value="" class="form-control" id="uploadXlsx"/>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="importKendaraanXlsx(this.value);" value="/Kendaraan/ImportXlsx/">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<iframe id="downloadFrame" src="" style="display:none;"></iframe>
+
+@section Scripts{ 
+    <script>
+        $(document).ready(function () {
+
+            $("body").children().first().before($(".modal"));//add this if you want to add more than one modal on same page
+
+            getKendaraan();
+
+            $('.dates').datepicker({
+                autoclose: true,
+                format: "yyyy",
+                viewMode: "years",
+                minViewMode: "years"
+            });
+
+            toastr.options = {
+                "positionClass": "toast-top-center",
+            }
+
+            $(document).on('click', '#editKendaraan', function (e) {
+                e.preventDefault();
+                var idKendaraan = $(this).data('kendaraan');
+                getKendaraanBy(idKendaraan);
+            });
+
+            $(document).on('click', '#editKendaraan', function (e) {
+                e.preventDefault();
+                var idKendaraan = $(this).data('kendaraan');
+                getKendaraanBy(idKendaraan);
+            });
+
+            $(document).on('click', '#delKendaraan', function (e) {
+                e.preventDefault();
+                var idKendaraan = $(this).data('kendaraan');               
+                if (confirm("Are you sure to delete it?")) {
+                    delKendaraanBy(idKendaraan);
+                }
+                return false;
+            });
+        });
+
+        function save() {
+            var chk = check();
+            if (chk == true) {
+                var formData = new FormData();
+                formData.append("id", $('#idKendaraan').val());
+                formData.append("nama", $('#nama').val());
+                formData.append("model", $('#model').val());
+                formData.append("merek", $('#merek').val());
+                formData.append("transmisi", $('#transmisi').val());
+                formData.append("tahun", $('#tahun').val());
+                formData.append("harga", $('#harga').val());
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Kendaraan/SaveKendaraan/',
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function (result) {
+                        toastr.info(result);
+                        $('#modalKendaraan').modal('hide');
+                        getKendaraan();
+                        // on success use return data here
+                    },
+                    error: function (xhr, type, exception) {
+                        // if ajax fails display error alert
+                        alert("ajax error response type " + type);
+                    }
+                });
+            }
+        }
+
+        function check() {
+            //var id = $('#idKendaraan').val();
+            var nama = $('#nama').val();
+            var model = $('#model').val();
+            var merek = $('#merek').val();
+            var transmisi = $('#transmisi').val();
+            var tahun = $('#tahun').val();
+            var harga = $('#harga').val();
+
+            if (nama == '' || nama == null) {
+                toastr.warning('Nama tidak boleh kosong!');
+                return false;
+            } else if (model == '' || model == null) {
+                toastr.warning('Model tidak boleh kosong!');
+                return false;
+            } else if (merek == '' || merek == null) {
+                toastr.warning('Merek tidak boleh kosong!');
+                return false;
+            } else if (transmisi == '' || transmisi == null) {
+                toastr.warning('Transmisi tidak boleh kosong!');
+                return false;
+            } else if (tahun.length > 4 || tahun == '' || tahun == null || isNaN(tahun)) {
+                toastr.warning('Tahun tidak boleh kosong dan format selain YYYY!');
+                return false;
+            } else if (harga == '' || harga == null || harga < 1 || isNaN(harga)) {
+                toastr.warning('Harga tidak boleh kosong atau selain angka!');
+                return false;
+            } else { return true; }
+        }
+
+        function getKendaraan() {
+            $.ajax({
+                type: 'GET',
+                url: '/Kendaraan/GetKendaraan/',
+                dataType: 'json',
+                success: function (result) {
+                    // on success use return data here
+                    $('#listKendaraan').empty();
+                    var dt = '';
+                    if (result.length == 0) {
+                        dt += '<tr>';
+                        dt += '<td colspan="7" class="text-center">Data Not Found</td>';
+                        dt += '</tr>';
+                    } else {
+                        $.each(result, function (idx, val) {
+                            dt += '<tr>';
+                            dt += '<td>' + val.nama + '</td>';
+                            dt += '<td>' + val.model + '</td>';
+                            dt += '<td>' + val.merek + '</td>';
+                            dt += '<td>' + val.transmisi + '</td>';
+                            dt += '<td>' + val.tahun + '</td>';
+                            dt += '<td>' + val.harga + '</td>';
+                            dt += '<td>' + '<button id="editKendaraan" class="btn btn-sm btn-secondary" data-kendaraan="' + val.id + '"><i class="bi bi-pencil-square"></i> Edit</button> ' +
+                                '<button id="delKendaraan" class="btn btn-sm btn-danger" data-kendaraan="' + val.id + '"><i class="bi bi-x-square"></i> Delete</button>' + '</td>';
+                            dt += '</tr>';
+                        });
+                    }
+
+                    $('#listKendaraan').append(dt);
+                },
+                error: function (xhr, type, exception) {
+                    // if ajax fails display error alert
+                    alert("ajax error response type " + type);
+                }
+            });
+        }
+
+        function getKendaraanBy(idKendaraan) {
+            $.ajax({
+                type: 'GET',
+                url: '/Kendaraan/GetKendaraanById/',
+                dataType: 'json',
+                data: { id: idKendaraan },
+                success: function (result) {
+                    // on success use return data here
+                    $('#modalKendaraan').modal('show');
+                    $('#nama').val(result.nama);
+                    $('#model').val(result.model);
+                    $('#merek').val(result.merek);
+                    $('#transmisi').val(result.transmisi);
+                    $('#tahun').val(result.tahun);
+                    $('#harga').val(result.harga);
+                    $('#idKendaraan').val(result.id);
+                    $('#kendaraanModalLabel').text('Edit Data Kendaraan');
+                },
+                error: function (xhr, type, exception) {
+                    // if ajax fails display error alert
+                    alert("ajax error response type " + type);
+                }
+            });
+        }
+
+        function delKendaraanBy(idKendaraan) {
+            $.ajax({
+                type: 'POST',
+                url: '/Kendaraan/DeleteKendaraan/',
+                dataType: 'json',
+                data: { id: idKendaraan },
+                success: function (result) {
+                    // on success use return data here
+                    toastr.success(result);
+                    getKendaraan();
+                },
+                error: function (xhr, type, exception) {
+                    // if ajax fails display error alert
+                    alert("ajax error response type " + type);
+                }
+            });
+        }
+
+        function addKendaraan() {
+            $('#modalKendaraan').modal('show');
+            $('#nama').val('');
+            $('#model').val('');
+            $('#merek').val('');
+            $('#transmisi').val('');
+            $('#tahun').val('');
+            $('#harga').val('');
+            $('#idKendaraan').val('');
+            $('#kendaraanModalLabel').text('Tambah Data Kendaraan');
+        }
+
+        function expKendaraanXlsx(link) {
+            //alert(link);
+            $('#downloadFrame').remove(); // This shouldn't fail if frame doesn't exist
+            $('body').append('<iframe id="downloadFrame" style="display:none"></iframe>');
+            
+            $('#downloadFrame').attr('src', link);
+        }
+
+        function expKendaraanPdf(link) {
+            //alert(link);
+            $('#downloadFrame').remove(); // This shouldn't fail if frame doesn't exist
+            $('body').append('<iframe id="downloadFrame" style="display:none"></iframe>');
+
+            $('#downloadFrame').attr('src', link);
+        }
+
+        function importKendaraanXlsx(link) {
+            //alert(link);
+            var uploadFile = $('#uploadXlsx').val();
+            if (uploadFile == null || uploadFile == '') {
+                toastr.warning("File Upload tidak boleh kosong!!!", "Peringatan");
+            } else if (uploadFile.split('.').pop() != 'xlsx') {
+                toastr.warning("File Upload harus .xlsx!!!", "Peringatan");
+            }
+            else {
+                var formData = new FormData();
+                var totalFiles = document.getElementById("uploadXlsx").files.length;
+
+                for (var i = 0; i < totalFiles; i++) {
+                    var file = document.getElementById("uploadXlsx").files[i];
+
+                    formData.append("file", file);
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: link,
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function (result) {
+                        // on success use return data here
+                    },
+                    error: function (xhr, type, exception) {
+                        // if ajax fails display error alert
+                        alert("ajax error response type " + type);
+                    }
+                });
+            }
+        }
+
+        function modalImport() {
+            $('#importKendaraan').modal('show');
+        }
+    </script>
+}
