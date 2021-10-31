@@ -373,6 +373,10 @@
                     data: formData,
                     success: function (result) {
                         // on success use return data here
+                        toastr.success("Data berhasil di import");
+                        $('#importKendaraan').modal('hide');
+                        getKendaraan();
+
                     },
                     error: function (xhr, type, exception) {
                         // if ajax fails display error alert
@@ -384,6 +388,7 @@
 
         function modalImport() {
             $('#importKendaraan').modal('show');
+            $('#uploadXlsx').val('');
         }
     </script>
 }
