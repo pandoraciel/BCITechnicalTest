@@ -1,4 +1,4 @@
-# BCITechnicalTest
+# BCITechnicalTest 2021-10-31
 -----
 create database "Belajar" on your local MS SQL Server
 execute sql file from Database folder(make sure table creation first execute)
